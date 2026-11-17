@@ -36,14 +36,14 @@ vec3 skyColor(vec3 d) {
   float y = max(d.y, 0.0);
   vec2 az = normalize(d.xz + vec2(1e-5));
   vec2 sunAz = normalize(uSunDir.xz);
-  float toward = dot(az, sunAz) * 0.5 + 0.5;
+  float toward = clamp(dot(az, sunAz) * 0.5 + 0.5, 0.0, 1.0);
   float warm = pow(toward, 5.0);
   vec3 horizon = mix(vec3(0.030, 0.055, 0.105), vec3(0.95, 0.36, 0.13), warm);
   vec3 middle = mix(vec3(0.012, 0.026, 0.070), vec3(0.105, 0.048, 0.105), warm);
   vec3 top = vec3(0.004, 0.010, 0.034);
   vec3 c = mix(horizon, middle, smoothstep(0.0, 0.15, y));
   c = mix(c, top, smoothstep(0.06, 0.6, y));
-  float sd = max(dot(normalize(d), uSunDir), 0.0);
+  float sd = clamp(dot(normalize(d), uSunDir), 0.0, 1.0);
   c += vec3(1.0, 0.50, 0.20) * (pow(sd, 22.0) * 0.32 + pow(sd, 160.0) * 0.7);
   c += vec3(1.0, 0.80, 0.52) * (smoothstep(0.99988, 0.99997, sd) * 5.0 + pow(sd, 1400.0) * 0.9);
   return c;
@@ -152,7 +152,7 @@ void main() {
   float bump = mix(0.75, 0.4, steep) * lod;
   N = normalize(N - (T * (hx - h0) + B * (hs - h0)) / e * bump);
 
-  float ndv = max(dot(N, V), 0.0);
+  float ndv = clamp(dot(N, V), 0.0, 1.0);
   float fres = 0.03 + 0.97 * pow(1.0 - ndv, 5.0);
   vec3 R = reflect(-V, N);
   R.y = abs(R.y);
@@ -162,7 +162,8 @@ void main() {
 
   // Body colour: dark in the trough, sea-glass green where the wall is thin and backlit.
   float hN = clamp(vWorld.y / uHeight, 0.0, 1.2);
-  float back = pow(max(dot(-V, uSunDir), 0.0), 2.0);
+  thin = clamp(thin, 0.0, 1.0);
+  float back = pow(clamp(dot(-V, uSunDir), 0.0, 1.0), 2.0);
   vec3 body = mix(DEEP, MID, smoothstep(0.0, 0.75, hN) * 0.85 + steep * 0.1);
   float glow = thin * (0.5 + 0.8 * back) + smoothstep(0.25, 1.0, hN) * steep * 0.22;
   body = mix(body, GLASS, clamp(glow, 0.0, 1.0));
@@ -172,7 +173,7 @@ void main() {
   vec3 col = mix(body, refl, fres * mix(1.0, 0.5, occ));
 
   // Sun glints.
-  float spec = pow(max(dot(R, uSunDir), 0.0), 220.0);
+  float spec = pow(clamp(dot(R, uSunDir), 0.0, 1.0), 220.0);
   col += vec3(1.0, 0.70, 0.42) * spec * 5.0 * (1.0 - occ) * (0.35 + 0.65 * lod);
 
   // Foam: on the lip, where it lands, and in the whitewater. Veins of old foam on the face.
@@ -254,7 +255,7 @@ varying vec3 vWorld;
 void main() {
   vec3 V = normalize(cameraPosition - vWorld);
   vec3 N = normalize(vN);
-  float ndv = max(dot(N, V), 0.0);
+  float ndv = clamp(dot(N, V), 0.0, 1.0);
   float fres = pow(1.0 - ndv, 3.0);
   vec3 R = reflect(-V, N);
   R.y = abs(R.y);
@@ -264,7 +265,7 @@ void main() {
   vec3 col = glass + skyColor(R) * fres * 1.1;
   col += ember * (core * 1.0 + 0.02) * uGlow;
   col += vec3(1.0, 0.75, 0.4) * pow(ndv, 14.0) * 0.5 * uGlow;
-  col += vec3(1.0, 0.85, 0.7) * pow(max(dot(R, uSunDir), 0.0), 50.0) * 1.4;
+  col += vec3(1.0, 0.85, 0.7) * pow(clamp(dot(R, uSunDir), 0.0, 1.0), 50.0) * 1.4;
   // Dark seal on top of the float.
   col = mix(col, vec3(0.015, 0.03, 0.035) + skyColor(R) * fres * 0.25, uCap);
   gl_FragColor = vec4(finish(col), 1.0);

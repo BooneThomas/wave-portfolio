@@ -11,7 +11,7 @@ import {
 } from 'three';
 import { layoutFloats, viewFor, type ViewPose } from './layout';
 import { createSky, createSpray, FloatLight, type Uniforms } from './objects';
-import { detectQuality, type Quality } from './quality';
+import { detectQuality, hasWebGL, type Quality } from './quality';
 import { WATER_FRAG, WATER_VERT } from './shaders';
 import { buildWaveGeometry } from './waveGeometry';
 import { clamp, WAVE } from './waveProfile';
@@ -48,7 +48,7 @@ export class WaveScene {
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(HOME.fov, 1, 0.1, 1200);
-  private readonly quality: Quality;
+  private quality: Quality;
   private readonly shared: Uniforms;
   private readonly floats: FloatLight[] = [];
   private readonly proxy: Mesh;
@@ -81,6 +81,8 @@ export class WaveScene {
   /** Bottom-left block of hero copy (its right and top edge, in pixels) that lights must stay clear of. */
   private avoid: { x: number; y: number } | null = null;
   private narrow: boolean | null = null;
+  /** Extra camera elevation on portrait screens. */
+  private tilt = 0;
 
   // Input.
   private drag: { id: number; x: number; y: number; moved: boolean } | null = null;
@@ -103,19 +105,17 @@ export class WaveScene {
   constructor(opts: SceneOptions) {
     this.opts = opts;
     this.motion = opts.motion;
-    const probe = document.createElement('canvas');
-    const gl = probe.getContext('webgl2') ?? probe.getContext('webgl');
-    if (!gl) throw new Error('WebGL not available');
-    this.quality = detectQuality(gl);
-    this.dprCap = this.quality.maxDpr;
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-
+    if (!hasWebGL()) throw new Error('WebGL not available');
+    // Antialiasing has to be chosen before the context exists; the rest is decided once
+    // the real context can tell us whether it is a software renderer.
     this.renderer = new WebGLRenderer({
       canvas: opts.canvas,
-      antialias: this.quality.antialias,
+      antialias: detectQuality(null).antialias,
       powerPreference: 'high-performance',
       alpha: false,
     });
+    this.quality = detectQuality(this.renderer.getContext());
+    this.dprCap = this.quality.maxDpr;
     this.renderer.setClearColor(0x04121a);
 
     const sun = new Vector3(0.985, 0.075, -0.13).normalize();
@@ -250,7 +250,7 @@ export class WaveScene {
 
   private homePose(): Pose {
     const az = HOME.azimuth + this.orbit.yaw + this.look.x * 0.05;
-    const el = HOME.elevation + this.orbit.pitch - this.look.y * 0.025;
+    const el = HOME.elevation + this.tilt + this.orbit.pitch - this.look.y * 0.025;
     const r = HOME.radius * this.fit;
     const p = new Vector3(Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az)).multiplyScalar(r).add(HOME.pivot);
     p.y = Math.max(p.y, 1.1);
@@ -292,7 +292,7 @@ export class WaveScene {
       const left = this.inset.leftGoal;
       const avoid = this.avoid;
       const minX = this.width * 0.06;
-      const maxX = this.width * (this.narrow ? 0.88 : 0.93);
+      const maxX = this.width * 0.93;
       const minY = top > 0 ? top + this.height * 0.02 : this.height * 0.17;
       const maxY = this.height - (this.narrow ? 96 : this.height * 0.15);
       const points = this.floats.map((f) => f.center);
@@ -490,6 +490,7 @@ export class WaveScene {
       if (u?.uScale) u.uScale.value = this.height * this.dpr * 0.5;
     }
     this.buildFloats(this.camera.aspect < 0.8);
+    this.tilt = clamp((0.9 - this.camera.aspect) * 0.4, 0, 0.15);
     this.tagWidth.clear();
     this.fitHome();
     this.dirty = 4;
@@ -591,6 +592,7 @@ export class WaveScene {
         const box = { x: x + 14, y: y - 16, w: w + 12, h: 32 };
         const clash =
           this.focusId !== null ||
+          this.narrow === true ||
           off ||
           box.x + box.w > this.width - 8 ||
           placed.some((p) => box.x < p.x + p.w && box.x + box.w > p.x && box.y < p.y + p.h && box.y + box.h > p.y);

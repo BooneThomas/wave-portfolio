@@ -52,6 +52,8 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1,
@@ -258,7 +260,7 @@ a {
   justify-content: space-between;
   gap: 1rem;
   height: var(--nav-h);
-  padding-inline: var(--gutter);
+  padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
   transition: background 0.3s, border-color 0.3s;
   border-bottom: 1px solid transparent;
 }
@@ -267,6 +269,7 @@ a {
 .nav[data-open='true'] {
   background: rgb(4 18 26 / 0.88);
   border-color: var(--line);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
@@ -349,6 +352,7 @@ a {
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .hero__stage[data-dragging='true'] {
@@ -427,9 +431,9 @@ a {
 
 .hero__controls {
   position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: 1rem;
+  left: max(var(--gutter), env(safe-area-inset-left));
+  right: max(var(--gutter), env(safe-area-inset-right));
+  bottom: calc(1rem + env(safe-area-inset-bottom));
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -660,6 +664,7 @@ a {
   flex-direction: column;
   background: rgb(5 22 31 / 0.9);
   border-left: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   user-select: text;
   -webkit-user-select: text;
@@ -778,6 +783,7 @@ a {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .panel__step {
@@ -1192,5 +1198,15 @@ a {
     background:
       linear-gradient(180deg, rgb(2 11 16 / 0.72) 0, rgb(2 11 16 / 0.5) 12rem, transparent 22rem),
       linear-gradient(0deg, rgb(2 11 16 / 0.7) 0, transparent 8rem);
+  }
+}
+
+/* Phones: labels are numbers only, sitting above their light like a pin. */
+@media (max-width: 47.99rem) {
+  .floats[data-live='true'] .float[data-compact='true'] .float__tag {
+    left: 50%;
+    top: auto;
+    bottom: calc(100% - 0.7rem);
+    transform: translateX(-50%);
   }
 }

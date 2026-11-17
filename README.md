@@ -47,13 +47,11 @@ Missing information is written as `[TODO: ...]` inside a content string. The sit
 
 The build is a static folder (`dist/`) with relative paths, so it works on any static host, at a domain root or in a sub-folder.
 
-### GitHub Pages (simplest, already set up)
+### GitHub Pages (live)
 
-1. On GitHub, open the repository: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. Push to `main`. The workflow in `.github/workflows/deploy.yml` lints, tests, builds and publishes.
-3. The site appears at `https://boonethomas.github.io/wave-portfolio/`.
+The site is live at **https://boonethomas.github.io/wave-portfolio/**.
 
-Until step 1 is done the workflow only runs the checks and skips the deploy.
+Every push to `main` runs `.github/workflows/deploy.yml`: lint, tests, build, publish. Nothing else to do. Pages is set to **Source: GitHub Actions** (repository Settings → Pages); if that is ever switched off, the workflow still runs the checks and skips the deploy.
 
 ### Anywhere else (Netlify, Vercel, Cloudflare Pages)
 
@@ -92,5 +90,4 @@ public/         favicon, poster.jpg (no-WebGL image), og.jpg (link preview)
 - Smart Campus, Energy Prices: result.
 - Hack The Future: date, the challenge, what was built, tech used.
 - Bachelor thesis: period, one-sentence summary, research question, approach, conclusion, tech used.
-- Enable GitHub Pages (see Deploy) and confirm the public URL in `src/content/site.ts`.
 - Optional: Dutch translation (see CONTENT_GUIDE.md), project images or links.

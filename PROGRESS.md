@@ -18,12 +18,14 @@ Resume here. Read `CLAUDE.md` and `DESIGN.md` first.
 - No WebGL: poster image and working project links. No JavaScript: all content is in the HTML.
 - Rough performance on the dev laptop (integrated AMD Radeon, 1440x900): first contentful paint about 0.5s, scene ready about 1.7s, about 290 kB transferred, well above 60 fps.
 
-Not verified: real phones and touch devices (only emulated viewports), screen readers, Safari and Firefox.
+- Cross-browser (Playwright): Firefox desktop and phone-sized, WebKit desktop, WebKit with iPhone 13, iPhone SE and iPad profiles, Chromium with a Pixel 7 profile. In each: scene renders, a light opens its project, the panel closes, no horizontal scroll, no errors.
+
+Not verified: physical phones (WebKit emulation is close to Safari on iOS, not identical) and screen readers.
 
 ## Open items
 
-- Test on a real phone, in Safari and Firefox, and with a screen reader.
-- Enable GitHub Pages (see README) and confirm `site.url`.
+- Test once on a physical iPhone and with a screen reader.
+- GitHub Pages is enabled (source: GitHub Actions); every push to `main` deploys to https://boonethomas.github.io/wave-portfolio/.
 - Ideas, not started: Dutch translation and language switch, project images, a subtle sound toggle, labels showing titles on phones.
 
 ## Content still missing (shown on the site as placeholders)
