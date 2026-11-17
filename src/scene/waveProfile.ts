@@ -28,9 +28,16 @@ export const WAVE = {
   xClose: 7,
   /** Start of the unbroken shoulder. */
   xOpen: -30,
+  /** The barrel stays intact up to this x, then collapses into whitewater. Grows with the number of projects. */
+  barrelEnd: 21,
   /** Extent of the sea plane. */
   far: 420,
 };
+
+/** Makes the barrel longer or shorter. Call before building the geometry. */
+export function setBarrelEnd(x: number) {
+  WAVE.barrelEnd = Math.max(x, WAVE.xClose + 6);
+}
 
 /** Break progress along the crest line: 0 = unbroken swell, 1 = lip has landed. */
 export function breakAt(x: number): number {
@@ -39,7 +46,7 @@ export function breakAt(x: number): number {
 
 /** How far the barrel has collapsed into whitewater: 0 = intact tube, 1 = foam pile. */
 export function collapseAt(x: number): number {
-  return smooth(WAVE.xClose + 5, WAVE.xClose + 22, x);
+  return smooth(WAVE.barrelEnd, WAVE.barrelEnd + 18, x);
 }
 
 /** Cheap deterministic 1D noise, used for small irregularities along the crest. */

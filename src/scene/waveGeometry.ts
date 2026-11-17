@@ -30,7 +30,7 @@ export function buildWaveGeometry(detail: number): BufferGeometry {
     outer: Math.round(60 * detail),
     back: 6,
   };
-  const xs = sliceXs(detail, 36);
+  const xs = sliceXs(detail, Math.max(36, WAVE.barrelEnd + 22));
   const cols = counts.front + counts.inner + counts.outer + counts.back;
   const rows = xs.length;
   const position = new Float32Array(rows * cols * 3);

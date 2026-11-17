@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { projects, site } from '../content';
 import { projectHref, useMediaQuery } from '../hooks';
 import { useI18n } from '../i18n';
+import { ENTRY_COUNT } from '../scene/constants';
 import type { WaveScene } from '../scene/WaveScene';
 import { ProjectPanel } from './ProjectPanel';
 import { asset, pad } from './Rich';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const ids = projects.map((p) => p.id);
+const inBarrel = projects.slice(ENTRY_COUNT);
 
 /** The wave: WebGL canvas, the project lights as real links on top of it, and the detail panel. */
 export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
@@ -24,6 +26,7 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<WaveScene | null>(null);
   const labels = useRef(new Map<string, HTMLElement>());
+  const moreRef = useRef<HTMLAnchorElement>(null);
   const [status, setStatus] = useState<Status>('loading');
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)');
   const coarse = useMediaQuery('(pointer: coarse)');
@@ -48,6 +51,7 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
           container: stageRef.current,
           ids,
           getLabel: (id) => labels.current.get(id) ?? null,
+          getMoreLabel: () => moreRef.current,
           motion: latest.current.motion,
           onSelect: (id) => latest.current.onSelect(id),
           onReady: () => setStatus('ready'),
@@ -192,6 +196,20 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
               </li>
             ))}
           </ul>
+          {/* Stands in for the lights hidden in the barrel. Mouse and touch only: keyboard and
+              screen reader users already have every project in the list above. */}
+          {inBarrel.length > 0 && (
+            <a className="float float--more" href={projectHref(inBarrel[0].id)} tabIndex={-1} aria-hidden="true" data-off="true" ref={moreRef}>
+              <span className="float__tag">
+                <span className="float__num">
+                  {pad(ENTRY_COUNT + 1)}
+                  {inBarrel.length > 1 && `–${pad(projects.length)}`}
+                </span>
+                <span className="float__title">{ui.scene.moreInside}</span>
+                <span>→</span>
+              </span>
+            </a>
+          )}
         </nav>
 
         {status === 'fallback' && <p className="hero__notice">{ui.scene.fallback}</p>}

@@ -9,10 +9,11 @@ Portfolio of Thomas Boone, built around one 3D ocean wave. Read `PROGRESS.md` (s
 - Never invent numbers, results, dates or technical details. Missing information is written as `[TODO: what is missing]` inside the content string; the site renders it as a visible placeholder chip.
 - No tracking, no analytics, no third-party requests, no secrets, no phone number. Fonts are self-hosted through `@fontsource-variable`.
 - Contact area: LinkedIn and email only.
-- Adding a project is adding one object to `src/content/projects.ts`. The scene places it by itself (`src/scene/layout.ts`); never position lights by hand.
+- Adding a project is adding one object to `src/content/projects.ts`. The scene places it by itself (`src/scene/layout.ts`): projects 1 to 3 at the mouth of the wave, all later ones in the barrel. Never position lights by hand.
+- Two surfaces: the wave (dark, ember accent) and the page below it (white, grey, black, Apple-like). Type is the system font on Apple devices and Inter elsewhere.
 - The 3D scene is plain Three.js in `src/scene/` and is lazy-loaded. React components never import from `three`.
 - Keep the three fallbacks working: reduced motion (static frame, instant camera cuts), low tier (lighter mesh and shaders), no WebGL (poster image and the same project links).
-- Colours, type and spacing come from the tokens in `src/styles/global.css`. Scene colours are documented in `DESIGN.md`.
+- Colours, type and spacing come from the semantic tokens in `src/styles/global.css` (`--text`, `--hairline`, ...); each surface redefines them. Scene colours are documented in `DESIGN.md`.
 - Work in phases. Finish one, update `PROGRESS.md`, then commit and push with a clear message.
 
 ## Commands

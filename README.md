@@ -1,6 +1,6 @@
 # The Wave: portfolio of Thomas Boone
 
-A portfolio built around one 3D ocean wave at first light. Every project is a glass float with a light inside, drifting on the water: on the open sea, in the trough and deep in the barrel. Select a light and the camera flies to it and opens the project.
+A portfolio built around one 3D ocean wave at first light. Every project is a glass float with a light inside, drifting on the water: the first three at the mouth of the wave, all the others in a line down the barrel. Select a light and the camera flies to it and opens the project. Below the wave the page is plain white, grey and black.
 
 Built with Vite, React, TypeScript and plain Three.js. No tracking, no cookies, no third-party requests.
 
@@ -28,7 +28,7 @@ All content lives in typed files. Components contain no copy.
 | Name, role, intro, about text, contact links, SEO | `src/content/site.ts` |
 | Buttons, labels, hints | `src/i18n/en.ts` |
 
-Adding a project is adding one object to `projects.ts`. The scene places and scales the lights by itself, for any number of projects.
+Adding a project is adding one object to `projects.ts`. The scene places the lights by itself: projects 1 to 3 at the mouth of the wave, every later project in the barrel, which grows with the list.
 
 **[CONTENT_GUIDE.md](CONTENT_GUIDE.md)** has copy-paste templates for everything.
 

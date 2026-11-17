@@ -9,6 +9,8 @@ Resume here. Read `CLAUDE.md` and `DESIGN.md` first.
 3. **Fallbacks and accessibility** (done): reduced motion, low tier, no-WebGL poster, no-JS prerendered content, keyboard path, focus handling in the panel.
 4. **Delivery** (done): poster and Open Graph image, production build, README, CONTENT_GUIDE, GitHub Pages workflow, final verification.
 
+5. **Restyle on request, 2026-11-17** (done): Apple-like type (system font / Inter), white-grey-black page below the wave, new light placement (1 to 3 at the mouth, 4 and up in a barrel that grows), one "inside the barrel" label for hidden lights.
+
 ## Last verification (production build, headless Edge)
 
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`: all pass.
@@ -26,6 +28,7 @@ Not verified: physical phones (WebKit emulation is close to Safari on iOS, not i
 
 - Test once on a physical iPhone and with a screen reader.
 - GitHub Pages is enabled (source: GitHub Actions); every push to `main` deploys to https://boonethomas.github.io/wave-portfolio/.
+- Stress-tested with 16 projects (temporary data): the barrel lengthens and the lights line up inside it.
 - Ideas, not started: Dutch translation and language switch, project images, a subtle sound toggle, labels showing titles on phones.
 
 ## Content still missing (shown on the site as placeholders)

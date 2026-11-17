@@ -70,12 +70,12 @@ export function createSpray(shared: Uniforms, count: number): Points {
   for (let i = 0; i < count; i++) {
     const impact = r() < 0.38;
     if (impact) {
-      const x = lerp(WAVE.xClose - 3, WAVE.xClose + 26, Math.pow(r(), 0.8));
+      const x = lerp(WAVE.xClose - 3, WAVE.barrelEnd + 22, Math.pow(r(), 0.8));
       const tip = lipTip(x);
       position.set([x, 0.15 + r() * 0.5, tip.z + (r() - 0.3) * 1.2], i * 3);
       velocity.set([(r() - 0.5) * 0.8, 0.9 + r() * 1.5, 0.5 + r() * 1.4], i * 3);
     } else {
-      const x = lerp(-9, WAVE.xClose + 26, r());
+      const x = lerp(-9, WAVE.barrelEnd + 22, r());
       const c = crestAt(x);
       const strength = 0.35 + 0.65 * breakAt(x);
       position.set([x, c.y - r() * 0.25, c.z + (r() - 0.5) * 0.8], i * 3);

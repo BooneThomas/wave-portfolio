@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
-import '@fontsource-variable/fraunces/index.css';
-import '@fontsource-variable/instrument-sans/index.css';
+import '@fontsource-variable/inter/index.css';
 import './styles/global.css';
 import App from './App';
 

@@ -9,12 +9,13 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
-import { layoutFloats, viewFor, type ViewPose } from './layout';
+import { barrelEndFor, layoutFloats, viewFor, type ViewPose } from './layout';
 import { createSky, createSpray, FloatLight, type Uniforms } from './objects';
 import { detectQuality, hasWebGL, type Quality } from './quality';
 import { WATER_FRAG, WATER_VERT } from './shaders';
 import { buildWaveGeometry } from './waveGeometry';
-import { clamp, WAVE } from './waveProfile';
+import { ENTRY_COUNT } from './constants';
+import { clamp, lipTip, setBarrelEnd, WAVE } from './waveProfile';
 
 export interface SceneOptions {
   canvas: HTMLCanvasElement;
@@ -24,6 +25,8 @@ export interface SceneOptions {
   ids: string[];
   /** Returns the DOM label (a button) for a project, positioned by the scene every frame. */
   getLabel: (id: string) => HTMLElement | null;
+  /** The single label that stands for all projects hidden inside the barrel. */
+  getMoreLabel: () => HTMLElement | null;
   motion: boolean;
   onSelect: (id: string) => void;
   onReady: () => void;
@@ -36,7 +39,9 @@ interface Pose {
 }
 
 const HOME = { pivot: new Vector3(2.2, 2.3, -0.4), azimuth: 2.76, elevation: 0.03, radius: 16.5, fov: 40 };
-const MOUTH = new Vector3(-7.5, 1.9, -0.6);
+// Flights in and out of the barrel bend through these two points: the open mouth, then under the roof.
+const MOUTH = new Vector3(-7.5, 1.9, -1.5);
+const UNDER_LIP = new Vector3(-1, 2.2, -4.6);
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /**
@@ -72,7 +77,7 @@ export class WaveScene {
   private readonly pos = new Vector3();
   private readonly target = new Vector3();
   private inside = false;
-  private tween: { from: Pose; t: number; duration: number; via: Vector3 | null } | null = null;
+  private tween: { from: Pose; t: number; duration: number; via: [Vector3, Vector3] | null } | null = null;
   private fit = 1;
   private orbit = { yaw: 0, pitch: 0, yawGoal: 0, pitchGoal: 0 };
   private look = new Vector2();
@@ -97,6 +102,8 @@ export class WaveScene {
   private readonly occluded = new Map<string, boolean>();
   private readonly compact = new Map<string, boolean>();
   private readonly tagWidth = new Map<string, number>();
+  /** Where the "inside the barrel" label sits: on the falling lip, in front of the hidden lights. */
+  private readonly moreAnchor = new Vector3();
 
   // Adaptive resolution.
   private slowFrames = 0;
@@ -120,6 +127,9 @@ export class WaveScene {
 
     const sun = new Vector3(0.985, 0.075, -0.13).normalize();
     this.shared = { uTime: { value: this.time }, uSunDir: { value: sun } };
+
+    // The barrel is as long as the line of projects inside it needs.
+    setBarrelEnd(barrelEndFor(opts.ids.length));
 
     // Sea and wave.
     const water = new Mesh(
@@ -161,9 +171,9 @@ export class WaveScene {
     this.tween = {
       from,
       t: 0,
-      duration: this.motion ? clamp(0.9 + distance * 0.07, 1.1, 2.3) : 0,
+      duration: this.motion ? clamp(0.9 + distance * 0.07, 1.1, 2.6) : 0,
       // Going in or out of the barrel: swing through its open mouth instead of through the lip.
-      via: from.inside !== goal.inside ? MOUTH : null,
+      via: from.inside === goal.inside ? null : goal.inside ? [MOUTH, UNDER_LIP] : [UNDER_LIP, MOUTH],
     };
     this.inside = goal.inside;
     this.syncEmphasis();
@@ -210,13 +220,23 @@ export class WaveScene {
       f.dispose();
     }
     this.floats.length = 0;
-    const placements = layoutFloats(this.opts.ids.length, narrow ? 0.55 : 1);
+    const placements = layoutFloats(this.opts.ids.length, narrow);
     this.opts.ids.forEach((id, i) => {
       const f = new FloatLight(id, placements[i], this.shared);
       this.floats.push(f);
       this.scene.add(f.group, f.poolMesh);
     });
+    const first = placements[ENTRY_COUNT];
+    if (first) {
+      const x = first.x + 3.2;
+      this.moreAnchor.set(x, 1.7, lipTip(x).z + 0.05);
+    }
     this.syncEmphasis();
+  }
+
+  /** Lights in the barrel cannot be seen or picked from outside it. */
+  private hiddenInBarrel(f: FloatLight): boolean {
+    return f.placement.index >= ENTRY_COUNT && !this.inside;
   }
 
   /** Turn the view left or right (keyboard). */
@@ -335,9 +355,10 @@ export class WaveScene {
         const a = 1 - e;
         this.pos
           .copy(tw.from.position)
-          .multiplyScalar(a * a)
-          .addScaledVector(tw.via, 2 * a * e)
-          .addScaledVector(goal.position, e * e);
+          .multiplyScalar(a * a * a)
+          .addScaledVector(tw.via[0], 3 * a * a * e)
+          .addScaledVector(tw.via[1], 3 * a * e * e)
+          .addScaledVector(goal.position, e * e * e);
       } else {
         this.pos.lerpVectors(tw.from.position, goal.position, e);
       }
@@ -459,7 +480,7 @@ export class WaveScene {
   private pick(): string | null {
     this.raycaster.setFromCamera(this.pointer, this.camera);
     const hits = this.raycaster.intersectObjects(
-      this.floats.map((f) => f.hit),
+      this.floats.filter((f) => !this.hiddenInBarrel(f) && !this.occluded.get(f.id)).map((f) => f.hit),
       false,
     );
     return hits.length ? (hits[0].object.userData.id as string) : null;
@@ -601,7 +622,40 @@ export class WaveScene {
           this.compact.set(f.id, clash);
           el.dataset.compact = String(clash);
         }
-        placed.push(clash ? { x: x - 20, y: y - 20, w: 40, h: 40 } : { x: x - 20, y: y - 20, w: box.w + 34, h: 40 });
+        // Many lights deep in the barrel end up close together on screen. A chip that would
+        // sit on top of a nearer one shrinks to a dot (still reachable by keyboard and the list).
+        const chip = { x: x - 17, y: y - 17, w: 34, h: 34 };
+        const crowded =
+          this.hiddenInBarrel(f) ||
+          (clash && f.id !== this.focusId && placed.some((p) => chip.x < p.x + p.w && chip.x + chip.w > p.x && chip.y < p.y + p.h && chip.y + chip.h > p.y));
+        if (el.dataset.crowded !== String(crowded)) el.dataset.crowded = String(crowded);
+        if (!crowded) placed.push(clash ? chip : { x: x - 20, y: y - 20, w: box.w + 34, h: 40 });
+      }
+    }
+
+    // One label for everything inside the barrel, shown while the camera is outside it.
+    const more = this.opts.getMoreLabel();
+    if (more) {
+      this.v.copy(this.moreAnchor).project(cam);
+      const x = (this.v.x * 0.5 + 0.5) * this.width;
+      const y = (-this.v.y * 0.5 + 0.5) * this.height;
+      const off =
+        this.floats.length <= ENTRY_COUNT || this.inside || this.v.z > 1 || x < 30 || x > this.width - 30 || y < 0 || y > this.height;
+      more.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+      if (more.dataset.off !== String(off)) more.dataset.off = String(off);
+      if (recompute) {
+        let w = this.tagWidth.get('more');
+        if (w === undefined) {
+          w = (more.firstElementChild as HTMLElement | null)?.offsetWidth ?? 180;
+          if (more.dataset.compact !== 'true') this.tagWidth.set('more', w);
+        }
+        const box = { x: x - w / 2 - 6, y: y - 18, w: w + 12, h: 36 };
+        const clash =
+          this.narrow === true ||
+          box.x < 8 ||
+          box.x + box.w > this.width - 8 ||
+          placed.some((q) => box.x < q.x + q.w && box.x + box.w > q.x && box.y < q.y + q.h && box.y + box.h > q.y);
+        if (more.dataset.compact !== String(clash)) more.dataset.compact = String(clash);
       }
     }
   }

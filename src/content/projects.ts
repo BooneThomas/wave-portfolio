@@ -1,8 +1,9 @@
 import type { Project } from './types';
 
 /**
- * All projects. The order here is the order in the overview list and
- * the order of the lights in the 3D scene (first = open sea, last = deep in the barrel).
+ * All projects. The order here is the order in the overview list and in the 3D scene:
+ * projects 1 to 3 are the lights you see at the mouth of the wave, project 4 and up
+ * sit inside the barrel, one behind the other, without a maximum.
  * Adding a project = adding one object. The scene places it automatically.
  */
 export const projects: Project[] = [

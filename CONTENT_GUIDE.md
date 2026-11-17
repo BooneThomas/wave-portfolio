@@ -9,6 +9,8 @@ Everything you can read on the site comes from four files. Edit them, save, done
 | Name, role, intro, about, contact, SEO | `src/content/site.ts` |
 | Buttons, labels, hints | `src/i18n/en.ts` |
 
+This guide is written so that any capable assistant (Claude Opus, Claude Sonnet or another model) or a person can extend the site without reading the 3D code. Point the assistant at this file and at `CLAUDE.md`.
+
 Rules:
 
 - Never invent numbers, results or dates. If something is unknown, write `[TODO: what is missing]` inside the string. It shows up on the site as a dashed placeholder.
@@ -16,7 +18,12 @@ Rules:
 
 ## Add a project
 
-Add one object to the `projects` array in `src/content/projects.ts`. Its position in the array is its number, its place in the list and its place in the scene (first = open sea, last = deepest in the barrel). The light is placed and sized automatically.
+Add one object to the `projects` array in `src/content/projects.ts`. Its position in the array is its number, its place in the list and its place in the scene. The light is placed automatically:
+
+- projects 1, 2 and 3 are the ones you see when the page opens: on the open sea, in the trough, and just inside the mouth of the wave. Put your three strongest or newest projects first.
+- project 4 and every project after it sits inside the barrel, one behind the other. There is no maximum: the barrel grows with the list.
+
+So adding a project at the end of the array adds one more light at the back of the barrel and changes nothing else.
 
 ```ts
 {

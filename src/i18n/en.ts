@@ -17,6 +17,7 @@ export const en = {
     hint: 'Drag or use the arrow keys to look around. Pick a light to open a project.',
     hintTouch: 'Swipe sideways to look around. Tap a light to open a project.',
     overviewCta: 'See all projects as a list',
+    moreInside: 'inside the barrel',
     pause: 'Pause motion',
     play: 'Play motion',
     reset: 'Reset view',
