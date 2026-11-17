@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { projects, site } from '../content';
 import { projectHref, useMediaQuery } from '../hooks';
 import { useI18n } from '../i18n';
-import { ENTRY_COUNT } from '../scene/constants';
 import type { WaveScene } from '../scene/WaveScene';
 import { ProjectPanel } from './ProjectPanel';
 import { asset, pad } from './Rich';
@@ -17,7 +16,6 @@ interface Props {
 }
 
 const ids = projects.map((p) => p.id);
-const inBarrel = projects.slice(ENTRY_COUNT);
 
 /** The wave: WebGL canvas, the project lights as real links on top of it, and the detail panel. */
 export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
@@ -26,13 +24,16 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<WaveScene | null>(null);
   const labels = useRef(new Map<string, HTMLElement>());
-  const moreRef = useRef<HTMLAnchorElement>(null);
   const [status, setStatus] = useState<Status>('loading');
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)');
   const coarse = useMediaQuery('(pointer: coarse)');
   const [motionChoice, setMotionChoice] = useState<boolean | null>(null);
   const motion = motionChoice ?? !reduced;
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  // Larger reading view of the project panel. Remembered while the visitor browses.
+  const [expanded, setExpanded] = useState(false);
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
   const selected = projects.find((p) => p.id === selectedId) ?? null;
 
   // Latest values for the scene, which is created asynchronously.
@@ -51,7 +52,6 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
           container: stageRef.current,
           ids,
           getLabel: (id) => labels.current.get(id) ?? null,
-          getMoreLabel: () => moreRef.current,
           motion: latest.current.motion,
           onSelect: (id) => latest.current.onSelect(id),
           onReady: () => setStatus('ready'),
@@ -94,6 +94,8 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
     if (!stage || !scene) return;
     const panel = panelEl.current;
     if (panel) {
+      // The large reading view covers the scene, so there is nothing to make room for.
+      if (expandedRef.current) return scene.setInset(0, 0);
       const side = panel.offsetWidth < stage.clientWidth * 0.7;
       scene.setInset(side ? panel.offsetWidth : 0, side ? 0 : panel.offsetHeight, 0);
       return;
@@ -118,7 +120,7 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
     reportInsets();
     return () => observer.current?.disconnect();
     // Runs again when the scene becomes ready, so it gets the first measurement.
-  }, [reportInsets, status]);
+  }, [reportInsets, status, expanded]);
 
   // Keyboard: Esc closes, arrows step through projects or turn the view.
   useEffect(() => {
@@ -196,20 +198,6 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
               </li>
             ))}
           </ul>
-          {/* Stands in for the lights hidden in the barrel. Mouse and touch only: keyboard and
-              screen reader users already have every project in the list above. */}
-          {inBarrel.length > 0 && (
-            <a className="float float--more" href={projectHref(inBarrel[0].id)} tabIndex={-1} aria-hidden="true" data-off="true" ref={moreRef}>
-              <span className="float__tag">
-                <span className="float__num">
-                  {pad(ENTRY_COUNT + 1)}
-                  {inBarrel.length > 1 && `–${pad(projects.length)}`}
-                </span>
-                <span className="float__title">{ui.scene.moreInside}</span>
-                <span>→</span>
-              </span>
-            </a>
-          )}
         </nav>
 
         {status === 'fallback' && <p className="hero__notice">{ui.scene.fallback}</p>}
@@ -231,7 +219,15 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
           </div>
         )}
 
-        {selected && <ProjectPanel project={selected} onClose={onClose} panelRef={panelRef} />}
+        {selected && (
+          <ProjectPanel
+            project={selected}
+            onClose={onClose}
+            panelRef={panelRef}
+            expanded={expanded}
+            onToggleExpanded={() => setExpanded((v) => !v)}
+          />
+        )}
       </div>
     </section>
   );

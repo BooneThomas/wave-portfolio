@@ -11,6 +11,8 @@ Resume here. Read `CLAUDE.md` and `DESIGN.md` first.
 
 5. **Restyle on request, 2026-11-17** (done): Apple-like type (system font / Inter), white-grey-black page below the wave, new light placement (1 to 3 at the mouth, 4 and up in a barrel that grows), one "inside the barrel" label for hidden lights.
 
+6. **Refinements on request, 2026-11-17** (done): every barrel light keeps its own number (on the lip), section numbers removed, larger reading view for the panel, scene controls hidden while a project is open, name in the bar only after scrolling, LinkedIn and email filled in.
+
 ## Last verification (production build, headless Edge)
 
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`: all pass.
@@ -33,7 +35,6 @@ Not verified: physical phones (WebKit emulation is close to Safari on iOS, not i
 
 ## Content still missing (shown on the site as placeholders)
 
-- LinkedIn URL and email address (`src/content/site.ts`)
 - VLAIO internship: period and result
 - Smart Campus and Energy Prices: result
 - Hack The Future: date, challenge, what was built, tech

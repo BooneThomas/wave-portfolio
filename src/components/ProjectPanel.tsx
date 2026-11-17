@@ -9,10 +9,13 @@ interface Props {
   onClose: () => void;
   /** Reports the panel element so the scene can keep its subject clear of it. */
   panelRef: (el: HTMLElement | null) => void;
+  /** Large reading view in the middle of the screen. */
+  expanded: boolean;
+  onToggleExpanded: () => void;
 }
 
 /** Detail view of one project. Sits beside the scene on wide screens, below it on phones. */
-export function ProjectPanel({ project, onClose, panelRef }: Props) {
+export function ProjectPanel({ project, onClose, panelRef, expanded, onToggleExpanded }: Props) {
   const { ui, t } = useI18n();
   const rootRef = useRef<HTMLElement | null>(null);
   const index = projects.findIndex((p) => p.id === project.id);
@@ -32,6 +35,7 @@ export function ProjectPanel({ project, onClose, panelRef }: Props) {
       role="dialog"
       aria-modal="false"
       aria-labelledby="panel-title"
+      data-expanded={expanded ? 'true' : 'false'}
       tabIndex={-1}
       ref={(el) => {
         rootRef.current = el;
@@ -48,9 +52,23 @@ export function ProjectPanel({ project, onClose, panelRef }: Props) {
           <span className="sr-only">{ui.panel.of}</span>
           {pad(projects.length)}
         </p>
-        <button type="button" className="chip-btn" onClick={onClose}>
-          <span aria-hidden="true">←</span> {ui.panel.close}
-        </button>
+        <div className="panel__actions">
+          <button
+            type="button"
+            className="chip-btn panel__expand"
+            onClick={onToggleExpanded}
+            aria-pressed={expanded}
+            aria-label={ui.panel.expandLabel}
+          >
+            <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              {expanded ? <path d="M6.5 2.5v4h-4M9.5 13.5v-4h4M6.5 6.5 2 2M9.5 9.5 14 14" /> : <path d="M2.5 6.5v-4h4M13.5 9.5v4h-4M2.5 2.5 7 7M13.5 13.5 9 9" />}
+            </svg>
+            <span className="panel__expand-text">{expanded ? ui.panel.collapse : ui.panel.expand}</span>
+          </button>
+          <button type="button" className="chip-btn" onClick={onClose}>
+            <span aria-hidden="true">←</span> {ui.panel.close}
+          </button>
+        </div>
       </div>
 
       <div className="panel__body" key={project.id}>

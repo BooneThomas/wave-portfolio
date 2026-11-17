@@ -14,7 +14,6 @@ export function Overview({ selectedId, onHighlight }: OverviewProps) {
   return (
     <section id="overview" className="section" aria-labelledby="overview-title">
       <header className="section__head">
-        <p className="section__index" aria-hidden="true">01</p>
         <h2 id="overview-title">{ui.overview.title}</h2>
         <p className="section__intro">{ui.overview.intro}</p>
       </header>
@@ -64,7 +63,6 @@ export function About() {
   return (
     <section id="about" className="section" aria-labelledby="about-title">
       <header className="section__head">
-        <p className="section__index" aria-hidden="true">02</p>
         <h2 id="about-title">{ui.about.title}</h2>
       </header>
       <div className="about">
@@ -100,7 +98,6 @@ export function Experience() {
   return (
     <section id="experience" className="section" aria-labelledby="experience-title">
       <header className="section__head">
-        <p className="section__index" aria-hidden="true">03</p>
         <h2 id="experience-title">{ui.experience.title}</h2>
       </header>
       <ol className="timeline">
@@ -167,7 +164,6 @@ export function Contact() {
   return (
     <section id="contact" className="section section--contact" aria-labelledby="contact-title">
       <header className="section__head">
-        <p className="section__index" aria-hidden="true">04</p>
         <h2 id="contact-title">{ui.contact.title}</h2>
       </header>
       <p className="lead">{ui.contact.lead}</p>

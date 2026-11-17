@@ -31,7 +31,7 @@ The order of the projects is a short journey into the wave:
 
 The first three places are fixed. Every further project joins the line in the barrel, and the barrel grows longer when the line needs room (`barrelEndFor`), so the number of projects is unlimited.
 
-From the home view the lights in the barrel are hidden behind the falling lip. One label on the lip ("04-06 inside the barrel") stands for them and opens the first one. Once the camera is inside (from project 3 on), every light in view has its own label again.
+From the home view the lights in the barrel are hidden behind the falling lip. Each of them keeps its own number: the numbers form an evenly spaced row along the lip, starting in front of the first hidden light, and show the title on hover or focus. Once the camera is inside (from project 3 on), the labels sit on the lights themselves again. With very many projects, numbers far down the line that would overlap a nearer one step back.
 
 ### Scene palette (linear values in `src/scene/shaders.ts`)
 
@@ -86,7 +86,10 @@ Ember appears only in the wave: light numbers, the selected state, bullet points
 
 - The page is one scroll: the wave fills the first screen, then Projects (plain list), About, Experience and education, Contact.
 - Sections are full-width colour bands; their content keeps to a 76rem measure.
-- Project details open in a panel inside the wave section: beside the scene on wide screens, as a bottom sheet on phones. The scene shifts its view so the selected light stays visible next to the panel.
+- Project details open in a panel inside the wave section: beside the scene on wide screens, as a bottom sheet on phones. The scene shifts its view so the selected light stays visible next to the panel. A "Larger" button turns the panel into a wide reading view in the middle of the screen, with the scene dimmed behind it.
+- While a project is open, the scene controls (pause, reset view) are hidden: the project is the only thing to act on.
+- The name in the navigation bar only appears once the page has scrolled past the wave; over the wave the large name is enough.
+- Sections have plain titles, no numbering.
 - The selected project lives in the URL (`#/project/<id>`), so the back button and shared links work.
 - Vertical swipes on the scene scroll the page; horizontal drags turn the camera. The wheel is never hijacked.
 - On phones the copy sits over the sky, labels are numbers only (pins above the lights), and the camera looks down a little more so the lights spread over the height of the screen.
@@ -98,4 +101,5 @@ Ember appears only in the wave: light numbers, the selected state, bullet points
 - Labels are DOM links, not sprites: keyboard, screen readers and tap targets come for free.
 - The page is prerendered at build time so the content is in the HTML for search engines and no-JS visitors.
 - Contact links are placeholders until Thomas fills them in: his email is not published without his say.
+- 2026-11-17, at Thomas's request: no grouped "inside the barrel" label, no section numbers, a larger reading view for the panel, scene controls hidden while a project is open, name in the bar only after scrolling.
 - 2026-11-17, at Thomas's request: Apple-like typography and a white, grey and black page below the wave (was a serif on dark ink); projects 1 to 3 at the mouth of the wave, all others in the barrel (was one path from the far open sea into the barrel).

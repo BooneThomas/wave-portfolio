@@ -25,8 +25,6 @@ export interface SceneOptions {
   ids: string[];
   /** Returns the DOM label (a button) for a project, positioned by the scene every frame. */
   getLabel: (id: string) => HTMLElement | null;
-  /** The single label that stands for all projects hidden inside the barrel. */
-  getMoreLabel: () => HTMLElement | null;
   motion: boolean;
   onSelect: (id: string) => void;
   onReady: () => void;
@@ -102,8 +100,14 @@ export class WaveScene {
   private readonly occluded = new Map<string, boolean>();
   private readonly compact = new Map<string, boolean>();
   private readonly tagWidth = new Map<string, number>();
-  /** Where the "inside the barrel" label sits: on the falling lip, in front of the hidden lights. */
-  private readonly moreAnchor = new Vector3();
+  /**
+   * Seen from outside, the lights in the barrel are hidden behind the falling lip. Their numbers
+   * then form a row along the lip: it starts at lipStart (in front of the first hidden light)
+   * and runs towards lipFar, far down the line.
+   */
+  private readonly lipStart = new Vector3();
+  private readonly lipFar = new Vector3();
+  private readonly lipRow = { x: 0, y: 0, dx: 0, dy: 0 };
 
   // Adaptive resolution.
   private slowFrames = 0;
@@ -228,8 +232,8 @@ export class WaveScene {
     });
     const first = placements[ENTRY_COUNT];
     if (first) {
-      const x = first.x + 3.2;
-      this.moreAnchor.set(x, 1.7, lipTip(x).z + 0.05);
+      this.lipStart.set(first.x, 1.7, lipTip(first.x).z + 0.05);
+      this.lipFar.set(first.x + 45, 1.7, lipTip(first.x).z + 0.05);
     }
     this.syncEmphasis();
   }
@@ -593,16 +597,37 @@ export class WaveScene {
     const order = recompute
       ? [...this.floats].sort((a, b) => a.center.distanceToSquared(cam.position) - b.center.distanceToSquared(cam.position))
       : this.floats;
+    // Row of numbers along the lip, evenly spaced on screen so none of them hides another.
+    const hiddenCount = this.inside ? 0 : this.floats.length - ENTRY_COUNT;
+    if (hiddenCount > 0) {
+      const row = this.lipRow;
+      this.v.copy(this.lipStart).project(cam);
+      row.x = (this.v.x * 0.5 + 0.5) * this.width;
+      row.y = (-this.v.y * 0.5 + 0.5) * this.height;
+      this.v.copy(this.lipFar).project(cam);
+      const fx = (this.v.x * 0.5 + 0.5) * this.width - row.x;
+      const fy = (-this.v.y * 0.5 + 0.5) * this.height - row.y;
+      const length = Math.hypot(fx, fy) || 1;
+      const step = Math.min(44, (length * 0.8) / Math.max(hiddenCount - 1, 1));
+      row.dx = (fx / length) * step;
+      row.dy = (fy / length) * step;
+    }
     for (const f of order) {
       const el = this.opts.getLabel(f.id);
       if (!el) continue;
-      this.v.copy(f.center).project(cam);
-      const x = (this.v.x * 0.5 + 0.5) * this.width;
-      const y = (-this.v.y * 0.5 + 0.5) * this.height;
+      // A light inside the barrel cannot be seen from outside it. Its label then takes its place
+      // in the row on the falling lip, so every project keeps its own number.
+      const onLip = this.hiddenInBarrel(f);
+      this.v.copy(onLip ? this.lipStart : f.center).project(cam);
+      const k = f.placement.index - ENTRY_COUNT;
+      const x = onLip ? this.lipRow.x + this.lipRow.dx * k : (this.v.x * 0.5 + 0.5) * this.width;
+      const y = onLip ? this.lipRow.y + this.lipRow.dy * k : (-this.v.y * 0.5 + 0.5) * this.height;
       const off = this.v.z > 1 || x < -40 || x > this.width + 40 || y < -40 || y > this.height + 40;
       el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
       el.dataset.off = String(off);
-      el.dataset.occluded = String(!!this.occluded.get(f.id) && f.id !== this.focusId);
+      el.dataset.occluded = String(!onLip && !!this.occluded.get(f.id) && f.id !== this.focusId);
+      const anchor = onLip ? 'lip' : 'float';
+      if (el.dataset.anchor !== anchor) el.dataset.anchor = anchor;
       if (recompute) {
         // Hide the title when it would collide with a nearer label or leave the frame.
         let w = this.tagWidth.get(f.id);
@@ -612,6 +637,7 @@ export class WaveScene {
         }
         const box = { x: x + 14, y: y - 16, w: w + 12, h: 32 };
         const clash =
+          onLip ||
           this.focusId !== null ||
           this.narrow === true ||
           off ||
@@ -622,40 +648,13 @@ export class WaveScene {
           this.compact.set(f.id, clash);
           el.dataset.compact = String(clash);
         }
-        // Many lights deep in the barrel end up close together on screen. A chip that would
-        // sit on top of a nearer one shrinks to a dot (still reachable by keyboard and the list).
-        const chip = { x: x - 17, y: y - 17, w: 34, h: 34 };
+        // With many projects the numbers far down the line end up on top of each other.
+        // One that would cover a nearer number steps back (still reachable by keyboard and the list).
+        const chip = { x: x - 17, y: y - 15, w: 34, h: 30 };
         const crowded =
-          this.hiddenInBarrel(f) ||
-          (clash && f.id !== this.focusId && placed.some((p) => chip.x < p.x + p.w && chip.x + chip.w > p.x && chip.y < p.y + p.h && chip.y + chip.h > p.y));
+          clash && f.id !== this.focusId && placed.some((p) => chip.x < p.x + p.w && chip.x + chip.w > p.x && chip.y < p.y + p.h && chip.y + chip.h > p.y);
         if (el.dataset.crowded !== String(crowded)) el.dataset.crowded = String(crowded);
         if (!crowded) placed.push(clash ? chip : { x: x - 20, y: y - 20, w: box.w + 34, h: 40 });
-      }
-    }
-
-    // One label for everything inside the barrel, shown while the camera is outside it.
-    const more = this.opts.getMoreLabel();
-    if (more) {
-      this.v.copy(this.moreAnchor).project(cam);
-      const x = (this.v.x * 0.5 + 0.5) * this.width;
-      const y = (-this.v.y * 0.5 + 0.5) * this.height;
-      const off =
-        this.floats.length <= ENTRY_COUNT || this.inside || this.v.z > 1 || x < 30 || x > this.width - 30 || y < 0 || y > this.height;
-      more.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-      if (more.dataset.off !== String(off)) more.dataset.off = String(off);
-      if (recompute) {
-        let w = this.tagWidth.get('more');
-        if (w === undefined) {
-          w = (more.firstElementChild as HTMLElement | null)?.offsetWidth ?? 180;
-          if (more.dataset.compact !== 'true') this.tagWidth.set('more', w);
-        }
-        const box = { x: x - w / 2 - 6, y: y - 18, w: w + 12, h: 36 };
-        const clash =
-          this.narrow === true ||
-          box.x < 8 ||
-          box.x + box.w > this.width - 8 ||
-          placed.some((q) => box.x < q.x + q.w && box.x + box.w > q.x && box.y < q.y + q.h && box.y + box.h > q.y);
-        if (more.dataset.compact !== String(clash)) more.dataset.compact = String(clash);
       }
     }
   }

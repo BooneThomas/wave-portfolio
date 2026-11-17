@@ -1,6 +1,6 @@
 # The Wave: portfolio of Thomas Boone
 
-A portfolio built around one 3D ocean wave at first light. Every project is a glass float with a light inside, drifting on the water: the first three at the mouth of the wave, all the others in a line down the barrel. Select a light and the camera flies to it and opens the project. Below the wave the page is plain white, grey and black.
+A portfolio built around one 3D ocean wave at first light. Every project is a glass float with a light inside, drifting on the water: the first three at the mouth of the wave, all the others in a line down the barrel. Select a light and the camera flies to it and opens the project; the Larger button turns the project into a wide reading view. Below the wave the page is plain white, grey and black.
 
 Built with Vite, React, TypeScript and plain Three.js. No tracking, no cookies, no third-party requests.
 
@@ -85,7 +85,6 @@ public/         favicon, poster.jpg (no-WebGL image), og.jpg (link preview)
 
 ## Open TODOs
 
-- Contact: fill in `linkedin` and `email` in `src/content/site.ts`. Until then the buttons show a placeholder.
 - VLAIO internship: period and result.
 - Smart Campus, Energy Prices: result.
 - Hack The Future: date, the challenge, what was built, tech used.

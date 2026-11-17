@@ -9,9 +9,9 @@ export const site: Site = {
   intro:
     'I build data pipelines and AI systems on Azure and AWS. Every light on the water is something I worked on.',
   links: {
-    // TODO: fill in both. While empty, the contact buttons show a visible placeholder.
-    linkedin: '',
-    email: '',
+    // Leave one empty and its contact button shows a visible placeholder instead.
+    linkedin: 'https://www.linkedin.com/in/thomas-boone-b67719334/',
+    email: 'thomasbooneprof@gmail.com',
   },
   seo: {
     title: 'Thomas Boone | Data & AI Engineer',

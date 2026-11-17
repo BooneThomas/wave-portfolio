@@ -217,7 +217,6 @@ a {
 .num,
 .float__num,
 .ledger__num,
-.section__index,
 .panel__count {
   font-variant-numeric: tabular-nums;
 }
@@ -360,6 +359,13 @@ a {
   letter-spacing: -0.02em;
   text-decoration: none;
   padding-block: 0.6rem;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+/* Over the wave the name is already there in large type, so the bar keeps it back until the page scrolls on. */
+.nav:not([data-solid='true']) .nav__brand {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .nav__links ul {
@@ -584,11 +590,9 @@ a {
   }
 }
 
-/* Wide screens: with the panel open, the scene controls move out from under it. */
-@media (min-width: 55rem) {
-  .hero[data-open='true'] .hero__controls {
-    right: calc(min(30rem, 46vw) + var(--gutter));
-  }
+/* With a project open, the scene controls step aside: the project is the only thing to act on. */
+.hero[data-open='true'] .hero__controls {
+  display: none;
 }
 
 /* Project lights: real links, positioned over their 3D floats by the scene. */
@@ -750,20 +754,15 @@ a {
   pointer-events: none;
 }
 
-/* One label for all the lights hidden inside the barrel. */
-.float--more {
-  display: none;
-}
-
-.floats[data-live='true'] .float--more {
-  display: block;
-}
-
-.floats[data-live='true'] .float--more::before {
+/*
+ * A light inside the barrel is hidden behind the falling lip when seen from outside.
+ * Its number then sits on the lip itself, in front of the light.
+ */
+.floats[data-live='true'] .float[data-anchor='lip']::before {
   content: none;
 }
 
-.floats[data-live='true'] .float--more .float__tag {
+.floats[data-live='true'] .float[data-anchor='lip'] .float__tag {
   left: 50%;
   top: 50%;
   bottom: auto;
@@ -845,6 +844,11 @@ a {
   gap: 1rem;
   padding: 0.75rem clamp(1rem, 3vw, 1.75rem);
   border-bottom: 1px solid var(--hairline);
+}
+
+.panel__actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .panel__count {
@@ -998,9 +1002,63 @@ a {
       transform: translateY(2rem);
     }
   }
+}
 
-  .hero[data-open='true'] .hero__controls {
+/* Large reading view: the panel moves to the middle of the screen and the scene dims behind it. */
+.panel[data-expanded='true'] {
+  inset: calc(var(--nav-h) + 0.75rem) 0 1.25rem 0;
+  width: min(56rem, calc(100% - 2 * var(--gutter)));
+  margin-inline: auto;
+  border: 1px solid var(--hairline);
+  border-radius: 1.5rem;
+  background: rgb(22 22 24 / 0.97);
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.55);
+  overflow: hidden;
+  animation-name: fade-in;
+}
+
+.panel[data-expanded='true'] .panel__body {
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 6vw, 4.5rem);
+  font-size: 1.15rem;
+}
+
+.panel[data-expanded='true'] .panel__body > * {
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+.panel[data-expanded='true'] .panel__body h2 {
+  font-size: clamp(2.1rem, 1.5rem + 2.6vw, 3.4rem);
+}
+
+.panel[data-expanded='true'] .panel__summary {
+  font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.6rem);
+}
+
+.panel[data-expanded='true'] .panel__body .eyebrow,
+.panel[data-expanded='true'] .panel__body h3,
+.panel[data-expanded='true'] .panel__period {
+  font-size: 1rem;
+}
+
+@media (max-width: 54.99rem) {
+  .panel[data-expanded='true'] {
+    inset: var(--nav-h) 0 0 0;
+    width: auto;
+    max-height: none;
+    border: 0;
+    border-top: 1px solid var(--hairline);
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 30rem) {
+  .panel__expand-text {
     display: none;
+  }
+
+  .panel__expand {
+    padding-inline: 0.85rem;
   }
 }
 
@@ -1030,13 +1088,6 @@ a {
 
 .section__head {
   margin-bottom: clamp(2rem, 5vw, 3.5rem);
-}
-
-.section__index {
-  margin-bottom: 0.6rem;
-  font-size: var(--step-0);
-  font-weight: 600;
-  color: var(--number);
 }
 
 .section__intro {
@@ -1377,7 +1428,7 @@ a {
   }
 
   /* Labels are numbers only, sitting above their light like a pin. */
-  .floats[data-live='true'] .float:not(.float--more)[data-compact='true'] .float__tag {
+  .floats[data-live='true'] .float:not([data-anchor='lip'])[data-compact='true'] .float__tag {
     left: 50%;
     top: auto;
     bottom: calc(100% - 0.7rem);
