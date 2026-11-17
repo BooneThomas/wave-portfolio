@@ -364,8 +364,9 @@ a {
     linear-gradient(180deg, #050c1f 0%, #101a36 28%, #3a2a48 42%, #7a4638 47%, #062430 47.2%, #04121a 100%);
 }
 
+/* The poster image itself is set inline by Hero.tsx, only when it is needed. */
 .hero[data-status='fallback'] .hero__backdrop {
-  background: #04121a url('/poster.jpg') center / cover no-repeat;
+  background: #04121a center / cover no-repeat;
 }
 
 .hero__canvas {
@@ -625,6 +626,7 @@ a {
 .hero[data-status='fallback'] .hero__copy {
   position: relative;
   inset: auto;
+  max-width: 34rem;
 }
 
 .hero[data-status='fallback'] .floats {
@@ -669,6 +671,10 @@ a {
     opacity: 0;
     transform: translateX(2rem);
   }
+}
+
+.panel:focus {
+  outline: none;
 }
 
 .panel__bar {
@@ -1148,12 +1154,12 @@ a {
     scroll-behavior: auto;
   }
 
+  /* No transitions or keyframe animations at all: state changes apply at once. */
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
 }
 

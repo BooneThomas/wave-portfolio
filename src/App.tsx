@@ -12,29 +12,23 @@ function Page() {
   const { ui, locale } = useI18n();
   const route = useProjectRoute(ids);
   const [highlightId, setHighlightId] = useState<string | null>(null);
-  const opener = useRef<HTMLElement | null>(null);
   const previous = useRef<string | null>(null);
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  // Opening a project brings the wave into view; closing returns focus to where the visitor was.
+  // Opening a project brings the wave into view. Closing puts keyboard focus on the
+  // light of the project that was open, so the visitor continues from there.
   useEffect(() => {
     const was = previous.current;
     previous.current = route.id;
-    if (route.id && !was) {
-      const active = document.activeElement as HTMLElement | null;
-      opener.current = active && active !== document.body ? active : null;
-    }
     if (route.id && window.scrollY > 8) {
       const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
     }
     if (!route.id && was) {
-      const el = opener.current?.isConnected ? opener.current : document.querySelector<HTMLElement>(`a.float[href="#/project/${was}"]`);
-      el?.focus();
-      opener.current = null;
+      document.querySelector<HTMLElement>(`a.float[href="#/project/${was}"]`)?.focus({ preventScroll: true });
     }
   }, [route.id]);
 

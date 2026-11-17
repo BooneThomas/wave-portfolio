@@ -21,6 +21,14 @@
     <meta property="og:image:alt" content="A large ocean wave curling over at first light, with small warm lights floating on the water." />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">%SITE_JSONLD%</script>
+    <noscript>
+      <style>
+        .hero__notice--loading { display: none; }
+        .hero[data-status='loading'] .floats { visibility: visible; position: absolute; left: var(--gutter); right: var(--gutter); top: calc(var(--nav-h) + 1rem); }
+        .hero[data-status='loading'] .floats ul { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .nav__toggle { display: none !important; }
+      </style>
+    </noscript>
   </head>
   <body>
     <div id="root"><!--app--></div>

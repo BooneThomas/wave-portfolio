@@ -4,7 +4,7 @@ import { projectHref, useMediaQuery } from '../hooks';
 import { useI18n } from '../i18n';
 import type { WaveScene } from '../scene/WaveScene';
 import { ProjectPanel } from './ProjectPanel';
-import { pad } from './Rich';
+import { asset, pad } from './Rich';
 
 type Status = 'loading' | 'ready' | 'fallback';
 
@@ -99,7 +99,7 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
     // Phones: copy sits on top. Wider screens: copy sits bottom left.
     if (window.matchMedia('(max-width: 47.99rem)').matches) scene.setInset(0, 0, copy.offsetTop + copy.offsetHeight);
     else scene.setInset(0, 0, 0, { x: copy.offsetLeft + copy.offsetWidth, y: copy.offsetTop });
-  }, [status]);
+  }, []);
   const panelRef = useCallback(
     (el: HTMLElement | null) => {
       panelEl.current = el;
@@ -113,7 +113,8 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
     if (copyRef.current) observer.current.observe(copyRef.current);
     reportInsets();
     return () => observer.current?.disconnect();
-  }, [reportInsets]);
+    // Runs again when the scene becomes ready, so it gets the first measurement.
+  }, [reportInsets, status]);
 
   // Keyboard: Esc closes, arrows step through projects or turn the view.
   useEffect(() => {
@@ -145,7 +146,12 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
   return (
     <section id="top" className="hero" aria-label={ui.scene.sectionLabel} data-status={status} data-open={selected ? 'true' : 'false'}>
       <div className="hero__stage" ref={stageRef}>
-        <div className="hero__backdrop" role="img" aria-label={ui.scene.canvasAlt} />
+        <div
+          className="hero__backdrop"
+          role="img"
+          aria-label={ui.scene.canvasAlt}
+          style={status === 'fallback' ? { backgroundImage: `url(${asset('poster.jpg')})` } : undefined}
+        />
         <canvas ref={canvasRef} className="hero__canvas" aria-hidden="true" />
         <div className="hero__shade" aria-hidden="true" />
 

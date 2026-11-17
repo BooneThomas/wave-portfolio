@@ -26,3 +26,6 @@ export function Rich({ text }: { text: Text }) {
 }
 
 export const pad = (n: number) => String(n).padStart(2, '0');
+
+/** URL of a file in /public. Works at a domain root and under a sub-path such as GitHub Pages. */
+export const asset = (path: string) => import.meta.env.BASE_URL + path.replace(/^\//, '');

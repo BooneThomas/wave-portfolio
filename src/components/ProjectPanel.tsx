@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { projects, type Project } from '../content';
 import { projectHref } from '../hooks';
 import { useI18n } from '../i18n';
-import { pad, Rich } from './Rich';
+import { asset, pad, Rich } from './Rich';
 
 interface Props {
   project: Project;
@@ -14,18 +14,33 @@ interface Props {
 /** Detail view of one project. Sits beside the scene on wide screens, below it on phones. */
 export function ProjectPanel({ project, onClose, panelRef }: Props) {
   const { ui, t } = useI18n();
-  const headingRef = useRef<HTMLHeadingElement>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
   const index = projects.findIndex((p) => p.id === project.id);
   const prev = projects[(index - 1 + projects.length) % projects.length];
   const next = projects[(index + 1) % projects.length];
 
-  // Move focus into the panel when a project opens or changes.
+  // Move focus into the panel when it opens. When stepping with Previous / Next the focus
+  // is already inside and stays on that control, so it can be pressed again.
   useEffect(() => {
-    headingRef.current?.focus({ preventScroll: true });
+    const root = rootRef.current;
+    if (root && !root.contains(document.activeElement)) root.focus({ preventScroll: true });
   }, [project.id]);
 
   return (
-    <aside className="panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" ref={panelRef}>
+    <aside
+      className="panel"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="panel-title"
+      tabIndex={-1}
+      ref={(el) => {
+        rootRef.current = el;
+        panelRef(el);
+      }}
+    >
+      <p className="sr-only" aria-live="polite">
+        {pad(index + 1)} {ui.panel.of} {pad(projects.length)}: {t(project.title)}
+      </p>
       <div className="panel__bar">
         <p className="panel__count">
           <span className="num">{pad(index + 1)}</span>
@@ -48,7 +63,7 @@ export function ProjectPanel({ project, onClose, panelRef }: Props) {
             </>
           )}
         </p>
-        <h2 id="panel-title" tabIndex={-1} ref={headingRef}>
+        <h2 id="panel-title">
           <Rich text={project.title} />
         </h2>
         {project.period && (
@@ -63,7 +78,7 @@ export function ProjectPanel({ project, onClose, panelRef }: Props) {
         {project.image && (
           <img
             className="panel__image"
-            src={project.image.src}
+            src={asset(project.image.src)}
             alt={t(project.image.alt)}
             width={project.image.width}
             height={project.image.height}
