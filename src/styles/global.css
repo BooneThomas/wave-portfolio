@@ -662,7 +662,7 @@ a {
   width: min(30rem, 46vw);
   display: flex;
   flex-direction: column;
-  background: rgb(5 22 31 / 0.9);
+  background: rgb(5 22 31 / 0.95);
   border-left: 1px solid var(--line);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
@@ -1208,5 +1208,12 @@ a {
     top: auto;
     bottom: calc(100% - 0.7rem);
     transform: translateX(-50%);
+  }
+}
+
+/* Wide screens: with the panel open, the scene controls move out from under it. */
+@media (min-width: 55rem) {
+  .hero[data-open='true'] .hero__controls {
+    right: calc(min(30rem, 46vw) + var(--gutter));
   }
 }
