@@ -166,7 +166,7 @@ void main() {
   vec3 body = mix(DEEP, MID, smoothstep(0.0, 0.75, hN) * 0.85 + steep * 0.1);
   float glow = thin * (0.5 + 0.8 * back) + smoothstep(0.25, 1.0, hN) * steep * 0.22;
   body = mix(body, GLASS, clamp(glow, 0.0, 1.0));
-  body += GLASS_HOT * pow(thin, 3.0) * (0.12 + 0.75 * back) * (0.6 + 0.4 * h0);
+  body += GLASS_HOT * pow(thin, 3.0) * (0.08 + 0.55 * back) * (0.6 + 0.4 * h0);
   body *= mix(1.0, 0.62, occ * (1.0 - thin));
 
   vec3 col = mix(body, refl, fres * mix(1.0, 0.5, occ));
@@ -184,7 +184,7 @@ void main() {
   float amb = mix(0.5, 1.0, N.y * 0.5 + 0.5);
   vec3 foamCol = mix(vec3(0.13, 0.20, 0.29) * amb, vec3(0.95, 0.62, 0.42), lit);
   foamCol *= mix(1.0, 0.5, occ) * (0.8 + 0.4 * fn);
-  foamCol += vec3(1.0, 0.62, 0.34) * back * thin * 0.5;
+  foamCol += vec3(1.0, 0.62, 0.34) * back * thin * 0.22;
   col = mix(col, foamCol, foam * 0.9);
 
   // Distance haze towards the horizon; dark mist down the barrel.

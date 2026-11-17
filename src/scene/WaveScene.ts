@@ -77,7 +77,10 @@ export class WaveScene {
   private orbit = { yaw: 0, pitch: 0, yawGoal: 0, pitchGoal: 0 };
   private look = new Vector2();
   private lookGoal = new Vector2();
-  private inset = { right: 0, bottom: 0, rightGoal: 0, bottomGoal: 0 };
+  private inset = { right: 0, bottom: 0, top: 0, left: 0, rightGoal: 0, bottomGoal: 0, topGoal: 0, leftGoal: 0 };
+  /** Bottom-left block of hero copy (its right and top edge, in pixels) that lights must stay clear of. */
+  private avoid: { x: number; y: number } | null = null;
+  private narrow: boolean | null = null;
 
   // Input.
   private drag: { id: number; x: number; y: number; moved: boolean } | null = null;
@@ -136,14 +139,6 @@ export class WaveScene {
     this.proxy = new Mesh(buildWaveGeometry(0.22));
     this.proxy.updateMatrixWorld();
 
-    // Project lights.
-    const placements = layoutFloats(opts.ids.length);
-    opts.ids.forEach((id, i) => {
-      const f = new FloatLight(id, placements[i], this.shared);
-      this.floats.push(f);
-      this.scene.add(f.group, f.poolMesh);
-    });
-
     this.bind();
     this.resize();
     const home = this.homePose();
@@ -187,11 +182,41 @@ export class WaveScene {
     this.dirty = 4;
   }
 
-  /** Space taken by the detail panel, so the subject stays centred in what is left. */
-  setInset(right: number, bottom: number) {
+  /**
+   * Space taken by interface on top of the scene (detail panel right or below, hero copy
+   * on top on phones), so the subject stays centred in what is left.
+   */
+  setInset(right: number, bottom: number, top = 0, avoid: { x: number; y: number } | null = null) {
+    const changed =
+      Math.abs(top - this.inset.topGoal) > 4 ||
+      Math.abs((avoid?.x ?? 0) - (this.avoid?.x ?? 0)) > 4 ||
+      Math.abs((avoid?.y ?? 0) - (this.avoid?.y ?? 0)) > 4;
+    this.avoid = avoid;
     this.inset.rightGoal = right;
     this.inset.bottomGoal = bottom;
+    this.inset.topGoal = top;
+    // Nudge the picture to the right so the mouth of the barrel is not under the copy.
+    this.inset.leftGoal = avoid ? Math.min(avoid.x * 0.3, this.width * 0.09) : 0;
+    if (changed && !this.focusId) this.fitHome();
     this.dirty = 4;
+  }
+
+  /** (Re)creates the project lights. Portrait screens get a more compact layout. */
+  private buildFloats(narrow: boolean) {
+    if (this.narrow === narrow) return;
+    this.narrow = narrow;
+    for (const f of this.floats) {
+      this.scene.remove(f.group, f.poolMesh);
+      f.dispose();
+    }
+    this.floats.length = 0;
+    const placements = layoutFloats(this.opts.ids.length, narrow ? 0.55 : 1);
+    this.opts.ids.forEach((id, i) => {
+      const f = new FloatLight(id, placements[i], this.shared);
+      this.floats.push(f);
+      this.scene.add(f.group, f.poolMesh);
+    });
+    this.syncEmphasis();
   }
 
   /** Turn the view left or right (keyboard). */
@@ -237,7 +262,7 @@ export class WaveScene {
     const target = new Vector3(...v.target);
     const offset = new Vector3(...v.position).sub(target);
     // On narrow screens step back a little so the light and its surroundings fit.
-    offset.multiplyScalar(1 + (this.fit - 1) * 0.35);
+    offset.multiplyScalar(Math.max(1, 1 + (this.fit - 1) * 0.35));
     const yaw = this.orbit.yaw + this.look.x * 0.06;
     offset.applyAxisAngle(new Vector3(0, 1, 0), -yaw * (v.inside ? 0.35 : 1));
     const p = target.clone().add(offset);
@@ -262,13 +287,23 @@ export class WaveScene {
       cam.position.copy(home.position);
       cam.lookAt(home.target);
       cam.updateMatrixWorld();
-      const marginX = this.width < 700 ? 0.8 : 0.86;
+      // Safe area in pixels: clear of the nav or hero copy above and the controls below.
+      const top = this.inset.topGoal;
+      const left = this.inset.leftGoal;
+      const avoid = this.avoid;
+      const minX = this.width * 0.06;
+      const maxX = this.width * (this.narrow ? 0.88 : 0.93);
+      const minY = top > 0 ? top + this.height * 0.02 : this.height * 0.17;
+      const maxY = this.height - (this.narrow ? 96 : this.height * 0.15);
       const points = this.floats.map((f) => f.center);
       // Keep the crest of the barrel in frame as well.
-      points.push(new Vector3(0, WAVE.height * 1.08, -4), new Vector3(-6, 0, 2));
+      points.push(new Vector3(0, WAVE.height * 1.08, -4));
       return points.every((p) => {
         v.copy(p).project(cam);
-        return v.z < 1 && Math.abs(v.x) < marginX && v.y > -0.72 && v.y < 0.6;
+        const x = (v.x * 0.5 + 0.5) * this.width + left / 2;
+        const y = (-v.y * 0.5 + 0.5) * this.height + top / 2;
+        const underCopy = avoid !== null && x < avoid.x + 28 && y > avoid.y - 20;
+        return v.z < 1 && x > minX && x < maxX && y > minY && y < maxY && !underCopy;
       });
     };
     const saved = { yaw: this.orbit.yaw, pitch: this.orbit.pitch, lx: this.look.x, ly: this.look.y };
@@ -325,8 +360,10 @@ export class WaveScene {
     const ins = this.inset;
     ins.right += (ins.rightGoal - ins.right) * k;
     ins.bottom += (ins.bottomGoal - ins.bottom) * k;
-    if (ins.right > 0.5 || ins.bottom > 0.5) {
-      cam.setViewOffset(this.width, this.height, ins.right / 2, ins.bottom / 2, this.width, this.height);
+    ins.top += (ins.topGoal - ins.top) * k;
+    ins.left += (ins.leftGoal - ins.left) * k;
+    if (ins.right > 0.5 || ins.bottom > 0.5 || ins.top > 0.5 || ins.left > 0.5) {
+      cam.setViewOffset(this.width, this.height, (ins.right - ins.left) / 2, (ins.bottom - ins.top) / 2, this.width, this.height);
     } else if (cam.view?.enabled) {
       cam.clearViewOffset();
     }
@@ -335,6 +372,8 @@ export class WaveScene {
       Math.abs(o.pitchGoal - o.pitch) > 1e-4 ||
       Math.abs(ins.rightGoal - ins.right) > 0.5 ||
       Math.abs(ins.bottomGoal - ins.bottom) > 0.5 ||
+      Math.abs(ins.topGoal - ins.top) > 0.5 ||
+      Math.abs(ins.leftGoal - ins.left) > 0.5 ||
       this.pos.distanceToSquared(goal.position) > 1e-5;
     if (settling) this.dirty = Math.max(this.dirty, 2);
   }
@@ -450,6 +489,8 @@ export class WaveScene {
       const u = ((child as Mesh).material as ShaderMaterial | undefined)?.uniforms;
       if (u?.uScale) u.uScale.value = this.height * this.dpr * 0.5;
     }
+    this.buildFloats(this.camera.aspect < 0.8);
+    this.tagWidth.clear();
     this.fitHome();
     this.dirty = 4;
   }

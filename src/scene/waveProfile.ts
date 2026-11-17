@@ -240,7 +240,7 @@ export function buildSlice(x: number, counts: SliceCounts): ProfilePoint[] {
     const occ = Math.max(pitched * smooth(0.2 * PI, 0.8 * PI, p.phi) * 0.9, closure * 0.75);
     const dzI = p.z * g - tipZ;
     const impact = closure * Math.exp(-(dzI * dzI) / 0.5) * smooth(0.3 * PI, 0, p.phi);
-    const foam = lipFoam * Math.exp(-dTip / (0.1 * g)) + impact + c * smooth(0.1, 1.0, p.phi / PI) * 0.8;
+    const foam = lipFoam * Math.exp(-dTip / (0.045 * g)) + impact + c * smooth(0.1, 1.0, p.phi / PI) * 0.8;
     pts.push({ z: p.z * g, y: p.y * g, s: p.s * g, thin, occ, foam: clamp(foam, 0, 1) });
   }
 
@@ -303,7 +303,7 @@ export function buildSlice(x: number, counts: SliceCounts): ProfilePoint[] {
     const pPhi = lerp(a.phi, b.phi, f);
     const thin = pitched * smooth(-0.4, 0.3, pPhi) * (0.25 + 0.75 * Math.exp(-(ps - tipS) / (0.45 * g)));
     const foam =
-      lipFoam * Math.exp(-(ps - tipS) / (0.16 * g)) +
+      lipFoam * Math.exp(-(ps - tipS) / (0.09 * g)) +
       pitched * 0.2 * smooth(0.1 * PI, 0.5 * PI, pPhi) +
       c * 0.85 * smooth(-beta, 0.3, pPhi);
     pts.push({ z: pz, y: py, s: ps, thin: clamp(thin, 0, 1), occ: 0, foam: clamp(foam, 0, 1) });

@@ -79,22 +79,41 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
     sceneRef.current?.highlight(focusedId ?? highlightId);
   }, [focusedId, highlightId, status]);
 
-  // Tell the scene how much room the panel takes, so the subject stays visible next to it.
+  // Tell the scene how much room the interface takes (panel, and the copy on phones),
+  // so its subject stays visible in the space that is left.
+  const copyRef = useRef<HTMLDivElement>(null);
+  const panelEl = useRef<HTMLElement | null>(null);
   const observer = useRef<ResizeObserver | null>(null);
-  const panelRef = useCallback((el: HTMLElement | null) => {
-    observer.current?.disconnect();
-    const report = () => {
-      const stage = stageRef.current;
-      if (!el || !stage) return sceneRef.current?.setInset(0, 0);
-      const side = el.offsetWidth < stage.clientWidth * 0.7;
-      sceneRef.current?.setInset(side ? el.offsetWidth : 0, side ? 0 : el.offsetHeight);
-    };
-    if (el) {
-      observer.current = new ResizeObserver(report);
-      observer.current.observe(el);
+  const reportInsets = useCallback(() => {
+    const stage = stageRef.current;
+    const scene = sceneRef.current;
+    if (!stage || !scene) return;
+    const panel = panelEl.current;
+    if (panel) {
+      const side = panel.offsetWidth < stage.clientWidth * 0.7;
+      scene.setInset(side ? panel.offsetWidth : 0, side ? 0 : panel.offsetHeight, 0);
+      return;
     }
-    report();
-  }, []);
+    const copy = copyRef.current;
+    if (!copy) return scene.setInset(0, 0);
+    // Phones: copy sits on top. Wider screens: copy sits bottom left.
+    if (window.matchMedia('(max-width: 47.99rem)').matches) scene.setInset(0, 0, copy.offsetTop + copy.offsetHeight);
+    else scene.setInset(0, 0, 0, { x: copy.offsetLeft + copy.offsetWidth, y: copy.offsetTop });
+  }, [status]);
+  const panelRef = useCallback(
+    (el: HTMLElement | null) => {
+      panelEl.current = el;
+      reportInsets();
+    },
+    [reportInsets],
+  );
+  useEffect(() => {
+    observer.current = new ResizeObserver(reportInsets);
+    if (stageRef.current) observer.current.observe(stageRef.current);
+    if (copyRef.current) observer.current.observe(copyRef.current);
+    reportInsets();
+    return () => observer.current?.disconnect();
+  }, [reportInsets]);
 
   // Keyboard: Esc closes, arrows step through projects or turn the view.
   useEffect(() => {
@@ -130,7 +149,7 @@ export function Hero({ selectedId, highlightId, onSelect, onClose }: Props) {
         <canvas ref={canvasRef} className="hero__canvas" aria-hidden="true" />
         <div className="hero__shade" aria-hidden="true" />
 
-        <div className="hero__copy">
+        <div className="hero__copy" ref={copyRef}>
           <p className="eyebrow">{t(site.role)}</p>
           <h1>{site.name}</h1>
           <p className="hero__intro">{t(site.intro)}</p>

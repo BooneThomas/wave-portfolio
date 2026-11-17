@@ -1156,3 +1156,35 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The panel already names the selected project, so its label steps aside. */
+.hero[data-open='true'] .floats[data-live='true'] .float[aria-current='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Phones: the copy sits over the sky, the wave and its lights get the rest of the screen. */
+@media (max-width: 47.99rem) {
+  .hero:not([data-status='fallback']) .hero__copy {
+    top: calc(var(--nav-h) + 0.25rem);
+    bottom: auto;
+  }
+
+  .hero__copy h1 {
+    margin-block: 0.25rem 0.6rem;
+  }
+
+  .hero__actions {
+    margin-top: 0.9rem;
+  }
+
+  .hero__hint {
+    display: none;
+  }
+
+  .hero__shade {
+    background:
+      linear-gradient(180deg, rgb(2 11 16 / 0.72) 0, rgb(2 11 16 / 0.5) 12rem, transparent 22rem),
+      linear-gradient(0deg, rgb(2 11 16 / 0.7) 0, transparent 8rem);
+  }
+}

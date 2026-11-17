@@ -3,8 +3,8 @@ import { layoutFloats } from './layout';
 
 describe('layoutFloats', () => {
   it('places any number of projects without overlap and inside the scene bounds', () => {
-    for (let n = 1; n <= 40; n++) {
-      const items = layoutFloats(n);
+    for (const spread of [1, 0.55]) for (let n = 1; n <= 40; n++) {
+      const items = layoutFloats(n, spread);
       expect(items).toHaveLength(n);
       for (let i = 0; i < n; i++) {
         const a = items[i];

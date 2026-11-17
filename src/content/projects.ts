@@ -26,7 +26,7 @@ export const projects: Project[] = [
     id: 'smart-campus',
     title: 'Smart Campus',
     kind: 'project',
-    organisation: 'Data engineering project',
+    organisation: 'Data engineering',
     summary:
       'An automated pipeline that turns campus WiFi and API data into attendance forecasts and dashboards for facility management.',
     highlights: [
@@ -41,7 +41,7 @@ export const projects: Project[] = [
     id: 'energy-prices',
     title: 'Energy Prices',
     kind: 'project',
-    organisation: 'Data engineering project',
+    organisation: 'Data engineering',
     summary:
       'ETL pipelines for large volumes of energy market data, with a time series model for price trends.',
     highlights: [
@@ -72,7 +72,7 @@ export const projects: Project[] = [
     id: 'hack-the-future',
     title: 'Hack The Future',
     kind: 'hackathon',
-    organisation: 'Hackathon',
+    organisation: 'Team entry',
     period: '[TODO: date]',
     summary: 'Second place with my team in the Hack The Future hackathon.',
     highlights: [
@@ -86,7 +86,7 @@ export const projects: Project[] = [
     id: 'bachelor-thesis',
     title: 'AI-supported test automation',
     kind: 'thesis',
-    organisation: 'Bachelor thesis, HOGENT',
+    organisation: 'HOGENT',
     period: '[TODO: period]',
     summary: 'My bachelor thesis on AI-supported test automation. [TODO: one-sentence summary]',
     highlights: [

@@ -41,15 +41,19 @@ function catmull(p0: number, p1: number, p2: number, p3: number, t: number): num
   return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
 }
 
-function samplePath(): { x: number; q: number; d: number }[] {
-  const out: { x: number; q: number; d: number }[] = [];
+type PathPoint = { x: number; q: number; d: number };
+
+/** spread < 1 pulls the open-sea part of the path towards the wave (used on portrait screens). */
+function samplePath(spread: number): PathPoint[] {
+  const out: PathPoint[] = [];
   const n = PATH.length;
+  const pts = PATH.map(([x, q]) => [x, q < 0 ? q * spread : q] as [number, number]);
   let d = 0;
   for (let i = 0; i < n - 1; i++) {
-    const p0 = PATH[Math.max(i - 1, 0)];
-    const p1 = PATH[i];
-    const p2 = PATH[i + 1];
-    const p3 = PATH[Math.min(i + 2, n - 1)];
+    const p0 = pts[Math.max(i - 1, 0)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(i + 2, n - 1)];
     for (let k = 0; k < 24; k++) {
       const t = k / 24;
       const x = catmull(p0[0], p1[0], p2[0], p3[0], t);
@@ -61,16 +65,20 @@ function samplePath(): { x: number; q: number; d: number }[] {
       out.push({ x, q, d });
     }
   }
-  const last = PATH[n - 1];
+  const last = pts[n - 1];
   const prev = out[out.length - 1];
   out.push({ x: last[0], q: last[1], d: d + Math.hypot(last[0] - prev.x, last[1] - prev.q) });
   return out;
 }
 
-const path = samplePath();
-const pathLength = path[path.length - 1].d;
+const paths = new Map<number, PathPoint[]>();
+function getPath(spread: number): PathPoint[] {
+  let p = paths.get(spread);
+  if (!p) paths.set(spread, (p = samplePath(spread)));
+  return p;
+}
 
-function pathAt(d: number) {
+function pathAt(path: PathPoint[], d: number) {
   let i = 0;
   while (i < path.length - 2 && path[i + 1].d < d) i++;
   const a = path[i];
@@ -83,16 +91,17 @@ function pathAt(d: number) {
 }
 
 /** Places n lights. Deterministic: the same n always gives the same layout. */
-export function layoutFloats(n: number): Placement[] {
+export function layoutFloats(n: number, spread = 1): Placement[] {
   if (n <= 0) return [];
-  const spacing = pathLength / n;
+  const path = getPath(spread);
+  const spacing = path[path.length - 1].d / n;
   const radius = clamp(spacing * 0.17, 0.19, 0.46);
   const out: Placement[] = [];
   for (let i = 0; i < n; i++) {
-    const p = pathAt((i + 0.5) * spacing);
+    const p = pathAt(path, (i + 0.5) * spacing);
     // Alternate left and right of the path so the lights read as scattered, not as a queue.
     const onFace = smooth(-0.5, 1.5, p.q);
-    const amp = Math.min(spacing * 0.3, lerp(1.2, 0.45, onFace));
+    const amp = Math.min(spacing * 0.3, lerp(1.2 * spread, 0.45, onFace));
     const side = (i % 2 === 0 ? 1 : -1) * amp * (n > 2 ? 1 : 0);
     const x = p.x + p.nx * side;
     let q = p.q + p.nq * side;
@@ -128,14 +137,14 @@ export interface ViewPose {
 export function viewFor(p: Placement): ViewPose {
   const [px, py, pz] = p.position;
   const k = 0.75 + p.radius;
-  const sea: [number, number, number] = [px - 3.6 * k, py + 1.5 * k, pz + 3.6 * k];
-  const camX = px - 4.4;
+  const sea: [number, number, number] = [px - 5.4 * k, py + 1.25 * k, pz + 5.0 * k];
+  const camX = px - 6.4;
   const c = tubeCenter(camX);
   const tube: [number, number, number] = [camX, Math.max(c.y * 0.8, py + 1.1), lerp(c.z, pz, 0.35)];
   const w = p.inside;
   return {
     position: [lerp(sea[0], tube[0], w), lerp(sea[1], tube[1], w), lerp(sea[2], tube[2], w)],
-    target: [px + w * 0.8, py + 0.15, pz],
+    target: [px + w * 0.8, py + lerp(1.0, 0.55, w), pz],
     inside: w > 0.5,
   };
 }
